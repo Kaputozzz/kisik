@@ -1,94 +1,98 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --accent: #ff85a2; --bg: #f8f9fa; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-               background: var(--bg); margin: 0; padding: 10px; color: #333; }
-        
-        .header { text-align: center; padding: 20px 0; }
-        .header h1 { font-size: 24px; color: var(--accent); margin: 0; }
-
-        .category-scroll { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scrollbar-width: none; }
-        .cat-chip { background: white; padding: 8px 18px; border-radius: 20px; border: 1px solid #eee; white-space: nowrap; font-weight: 500; }
-        .cat-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
-
-        .card { background: white; border-radius: 20px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .card img { width: 100%; height: 200px; object-fit: cover; }
-        .card-content { padding: 15px; }
-        .price { font-size: 20px; font-weight: 800; color: var(--accent); }
-        
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1.5px solid #eee; border-radius: 12px; font-size: 16px; outline: none; box-sizing: border-box; }
-        input:focus { border-color: var(--accent); }
-
-        .btn-main { background: var(--accent); color: white; border: none; width: 100%; padding: 16px; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 10px rgba(255,133,162,0.3); }
-        
-        .id-badge { font-size: 12px; color: #aaa; }
+        body { font-family: sans-serif; background: #fdf2f2; margin: 0; padding: 10px; }
+        .tab-btn { padding: 10px; border: none; background: #ddd; border-radius: 10px; }
+        .tab-btn.active { background: #ff85a2; color: white; }
+        .card { background: white; border-radius: 15px; padding: 15px; margin-top: 10px; }
+        .admin-form input { display: block; width: 100%; margin: 10px 0; padding: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        .hidden { display: none; }
+        img { width: 100%; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>KISIK SHOP 🐾</h1>
+    <div id="nav" class="hidden">
+        <button id="shop-tab" class="tab-btn active" onclick="switchTab('shop')">Магазин</button>
+        <button id="admin-tab" class="tab-btn" onclick="switchTab('admin')">Адмінка ⚙️</button>
     </div>
 
-    <div class="category-scroll">
-        <div class="cat-chip active">Всі</div>
-        <div class="cat-chip">Кофти</div>
-        <div class="cat-chip">Джинси</div>
-        <div class="cat-chip">Взуття</div>
+    <div id="shop-page">
+        <h2>Каталог 🐾</h2>
+        <div id="product-list"></div>
     </div>
 
-    <div class="card">
-        <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500" alt="Item">
-        <div class="card-content">
-            <span class="id-badge">ID: №1</span>
-            <h3>Худі "Classic Pink"</h3>
-            <div class="price">1250 грн</div>
-            
-            <select id="size1">
-                <option value="S">Розмір S</option>
-                <option value="M">Розмір M</option>
-                <option value="L">Розмір L</option>
-            </select>
-            
-            <input type="text" id="delivery1" placeholder="ПІБ, Місто, Номер пошти">
-            <button class="btn-main" onclick="order(1, 'Худі Classic', 1250)">ЗАМОВИТИ</button>
-        </div>
+    <div id="admin-page" class="hidden">
+        <h2>Додати товар</h2>
+        <form id="add-form" class="admin-form">
+            <input type="text" name="name" placeholder="Назва товару" required>
+            <input type="number" name="price" placeholder="Ціна" required>
+            <input type="text" name="category" placeholder="Категорія (КОФТИ, ДЖИНСИ...)" required>
+            <label>Фото:</label>
+            <input type="file" name="file" accept="image/*" required>
+            <button type="button" onclick="uploadProduct()" style="width:100%; background:#4CAF50; color:white; padding:15px; border-radius:10px; border:none;">ЗБЕРЕГТИ ✅</button>
+        </form>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
-        tg.expand();
+        const ADMIN_ID = 6240780160;
 
-        function order(id, name, price) {
-            const delivery = document.getElementById('delivery' + id).value;
-            const size = document.getElementById('size' + id).value;
-            const username = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username : null;
-
-            if (!username) {
-                alert("Помилка! Встановіть @username в Telegram та напишіть менеджеру @your_tag");
-                return;
-            }
-
-            if (delivery.length < 10) {
-                alert("Введіть дані доставки!");
-                return;
-            }
-
-            const data = {
-                product: name,
-                total: price,
-                size: size,
-                delivery: delivery
-            };
-
-            tg.sendData(JSON.stringify(data));
-            // Видалили tg.close() щоб дані точно встигли піти
+        // Показуємо адмінку тільки тобі
+        if (tg.initDataUnsafe.user && tg.initDataUnsafe.user.id === ADMIN_ID) {
+            document.getElementById('nav').classList.remove('hidden');
         }
+
+        function switchTab(tab) {
+            if(tab === 'admin') {
+                document.getElementById('admin-page').classList.remove('hidden');
+                document.getElementById('shop-page').classList.add('hidden');
+            } else {
+                document.getElementById('admin-page').classList.add('hidden');
+                document.getElementById('shop-page').classList.remove('hidden');
+                loadProducts();
+            }
+        }
+
+        async function uploadProduct() {
+            const form = document.getElementById('add-form');
+            const formData = new FormData(form);
+            
+            const resp = await fetch('/api/add_product', { method: 'POST', body: formData });
+            if(resp.ok) {
+                alert("Товар додано!");
+                form.reset();
+                switchTab('shop');
+            }
+        }
+
+        async function loadProducts() {
+            const resp = await fetch('/api/products');
+            const products = await resp.json();
+            const list = document.getElementById('product-list');
+            list.innerHTML = '';
+            products.forEach(p => {
+                list.innerHTML += `
+                    <div class="card">
+                        <img src="${p.photo}">
+                        <h3>${p.name}</h3>
+                        <p>Ціна: ${p.price} грн | Категорія: ${p.category}</p>
+                        <button onclick="order('${p.name}', ${p.price})" style="width:100%; background:#ff85a2; color:white; border:none; padding:10px; border-radius:8px;">ЗАМОВИТИ</button>
+                    </div>
+                `;
+            });
+        }
+
+        function order(name, price) {
+            // Тепер ми відправляємо дані через бот, але спочатку перевіряємо зв'язок
+            tg.sendData(JSON.stringify({product: name, total: price}));
+        }
+
+        loadProducts();
     </script>
 </body>
 </html>
