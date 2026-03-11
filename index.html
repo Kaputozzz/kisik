@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KISIK SHOP</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --main-color: #ff85a2; --bg-color: #fff5f7; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; color: #444; }
+        .header { text-align: center; padding: 20px 0; }
+        .header h1 { color: var(--main-color); margin: 0; font-size: 28px; }
+        .cat-logo { font-size: 40px; }
+
+        .product-card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 4px 15px rgba(255,133,162,0.1); margin-bottom: 20px; }
+        .product-img { width: 100%; border-radius: 15px; margin-bottom: 10px; }
+        
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
+        select, input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        
+        .btn-pay { background: var(--main-color); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        
+        #error-screen { display: none; text-align: center; padding: 50px 20px; }
+        .error-text { color: #e74c3c; font-weight: bold; }
+        .manager-link { color: var(--main-color); text-decoration: none; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+<div id="main-app">
+    <div class="header">
+        <div class="cat-logo">🐈‍⬛</div>
+        <h1>KISIK SHOP</h1>
+        <p>Стиль, що муркоче ✨</p>
+    </div>
+
+    <div class="product-card">
+        <img src="https://placehold.co/400x400/ff85a2/white?text=KISIK+HOODIE" alt="Product" class="product-img">
+        <h2 id="p-name">Худі "Classic Kisik"</h2>
+        <p id="p-price">Ціна: 1200 грн</p>
+
+        <label>Розмір:</label>
+        <select id="size">
+            <option value="S">S - Маленький котик</option>
+            <option value="M">M - Середній котик</option>
+            <option value="L">L - Великий котик</option>
+        </select>
+
+        <label>Колір:</label>
+        <select id="color">
+            <option value="Black">Чорний</option>
+            <option value="Pink">Рожевий</option>
+            <option value="White">Білий</option>
+        </select>
+
+        <hr style="margin: 20px 0; border: 0.5px solid #eee;">
+        
+        <label>ПІБ отримувача:</label>
+        <input type="text" id="fullname" placeholder="Іванов Іван">
+        
+        <label>Місто та № Нової Пошти:</label>
+        <input type="text" id="delivery" placeholder="Київ, відділення №1">
+    </div>
+
+    <button class="btn-pay" onclick="sendOrder()">Оплатити 🐾</button>
+</div>
+
+<div id="error-screen">
+    <div style="font-size: 60px;">😿</div>
+    <p class="error-text">Ой! Для замовлення потрібен Username у налаштуваннях Telegram.</p>
+    <p>Будь ласка, напишіть менеджеру напряму:</p>
+    <a href="https://t.me/твій_юзернейм" class="manager-link">@твій_юзернейм</a>
+</div>
+
+<script>
+    let tg = window.Telegram.WebApp;
+    tg.expand();
+
+    function sendOrder() {
+        // 1. Перевірка юзернейму
+        if (!tg.initDataUnsafe.user || !tg.initDataUnsafe.user.username) {
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('error-screen').style.display = 'block';
+            return;
+        }
+
+        // 2. Збір даних
+        const name = document.getElementById('fullname').value;
+        const delivery = document.getElementById('delivery').value;
+        
+        if (!name || !delivery) {
+            alert("Будь ласка, заповни дані для доставки! 🐾");
+            return;
+        }
+
+        const orderData = {
+            product: document.getElementById('p-name').innerText,
+            total: 1200,
+            size: document.getElementById('size').value,
+            color: document.getElementById('color').value,
+            delivery: name + ", " + delivery
+        };
+
+        // 3. Відправка в бот
+        tg.sendData(JSON.stringify(orderData));
+    }
+</script>
+</body>
+</html>
