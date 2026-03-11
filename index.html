@@ -1,63 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: #fff5f7; padding: 15px; -webkit-user-select: text; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .btn-buy { background: #ff85a2; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        :root { --accent: #ff85a2; --bg: #f8f9fa; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+               background: var(--bg); margin: 0; padding: 10px; color: #333; }
+        
+        .header { text-align: center; padding: 20px 0; }
+        .header h1 { font-size: 24px; color: var(--accent); margin: 0; }
+
+        .category-scroll { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scrollbar-width: none; }
+        .cat-chip { background: white; padding: 8px 18px; border-radius: 20px; border: 1px solid #eee; white-space: nowrap; font-weight: 500; }
+        .cat-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .card { background: white; border-radius: 20px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .card-content { padding: 15px; }
+        .price { font-size: 20px; font-weight: 800; color: var(--accent); }
+        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1.5px solid #eee; border-radius: 12px; font-size: 16px; outline: none; box-sizing: border-box; }
+        input:focus { border-color: var(--accent); }
+
+        .btn-main { background: var(--accent); color: white; border: none; width: 100%; padding: 16px; border-radius: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 10px rgba(255,133,162,0.3); }
+        
+        .id-badge { font-size: 12px; color: #aaa; }
     </style>
 </head>
 <body>
 
+    <div class="header">
+        <h1>KISIK SHOP 🐾</h1>
+    </div>
+
+    <div class="category-scroll">
+        <div class="cat-chip active">Всі</div>
+        <div class="cat-chip">Кофти</div>
+        <div class="cat-chip">Джинси</div>
+        <div class="cat-chip">Взуття</div>
+    </div>
+
     <div class="card">
-        <h2 style="color:#ff85a2; text-align:center;">🐾 KISIK SHOP</h2>
-        <p><b>Худі "Classic"</b> - 1200 грн</p>
-        
-        <label>Розмір:</label>
-        <select id="size">
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-        </select>
-
-        <label>Дані доставки (ПІБ, Місто, НП):</label>
-        <input type="text" id="delivery" placeholder="Іванов Іван, Київ, №1">
-
-        <button class="btn-buy" id="order_btn">ЗАМОВИТИ 🛒</button>
+        <img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500" alt="Item">
+        <div class="card-content">
+            <span class="id-badge">ID: №1</span>
+            <h3>Худі "Classic Pink"</h3>
+            <div class="price">1250 грн</div>
+            
+            <select id="size1">
+                <option value="S">Розмір S</option>
+                <option value="M">Розмір M</option>
+                <option value="L">Розмір L</option>
+            </select>
+            
+            <input type="text" id="delivery1" placeholder="ПІБ, Місто, Номер пошти">
+            <button class="btn-main" onclick="order(1, 'Худі Classic', 1250)">ЗАМОВИТИ</button>
+        </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        document.getElementById('order_btn').addEventListener('click', function() {
-            const delivery = document.getElementById('delivery').value;
-            const size = document.getElementById('size').value;
+        function order(id, name, price) {
+            const delivery = document.getElementById('delivery' + id).value;
+            const size = document.getElementById('size' + id).value;
+            const username = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username : null;
+
+            if (!username) {
+                alert("Помилка! Встановіть @username в Telegram та напишіть менеджеру @your_tag");
+                return;
+            }
 
             if (delivery.length < 10) {
-                alert("Будь ласка, введіть повні дані для доставки!");
+                alert("Введіть дані доставки!");
                 return;
             }
 
             const data = {
-                product: "Худі Classic",
-                total: 1200,
+                product: name,
+                total: price,
                 size: size,
                 delivery: delivery
             };
 
-            // ВІДПРАВКА ДАНИХ
-            try {
-                tg.sendData(JSON.stringify(data));
-                tg.close(); // Закрити вікно після замовлення
-            } catch (e) {
-                alert("Помилка відправки: " + e.message);
-            }
-        });
+            tg.sendData(JSON.stringify(data));
+            // Видалили tg.close() щоб дані точно встигли піти
+        }
     </script>
 </body>
 </html>
