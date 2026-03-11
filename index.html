@@ -2,69 +2,62 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: #fff5f7; padding: 10px; }
-        .category-btn { background: white; padding: 15px; margin: 5px; border-radius: 10px; border: 2px solid #ff85a2; cursor: pointer; display: inline-block; width: 44%; text-align: center; font-weight: bold; }
-        .hidden { display: none; }
-        .product-card { background: white; border-radius: 15px; padding: 15px; margin-top: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; -webkit-user-select: text !important; }
-        .btn-buy { background: #ff85a2; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; }
+        body { font-family: sans-serif; background: #fff5f7; padding: 15px; -webkit-user-select: text; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .btn-buy { background: #ff85a2; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <div id="categories">
-        <h2 style="text-align:center; color:#ff85a2;">Оберіть категорію 🐈</h2>
-        <div class="category-btn" onclick="showCategory('КОФТИ')">👕 КОФТИ</div>
-        <div class="category-btn" onclick="showCategory('ДЖИНСИ')">👖 ДЖИНСИ</div>
-        <div class="category-btn" onclick="showCategory('КРОСІВКИ')">👟 КРОСІВКИ</div>
-    </div>
+    <div class="card">
+        <h2 style="color:#ff85a2; text-align:center;">🐾 KISIK SHOP</h2>
+        <p><b>Худі "Classic"</b> - 1200 грн</p>
+        
+        <label>Розмір:</label>
+        <select id="size">
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+        </select>
 
-    <div id="catalog" class="hidden">
-        <button onclick="showCategories()" style="border:none; background:none; color:#ff85a2;">⬅ Назад</button>
-        <h3 id="cat-title"></h3>
-        <div id="items-list">
-            <div class="product-card">
-                <img src="https://via.placeholder.com/150" width="100%">
-                <h4>Товар категорії</h4>
-                <select id="size"><option>S</option><option>M</option><option>L</option></select>
-                <input type="text" id="delivery_data" placeholder="ПІБ, Місто, Номер пошти">
-                <button class="btn-buy" onclick="sendOrder('Худі', 1200)">Замовити 🐾</button>
-            </div>
-        </div>
+        <label>Дані доставки (ПІБ, Місто, НП):</label>
+        <input type="text" id="delivery" placeholder="Іванов Іван, Київ, №1">
+
+        <button class="btn-buy" id="order_btn">ЗАМОВИТИ 🛒</button>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        function showCategory(name) {
-            document.getElementById('categories').classList.add('hidden');
-            document.getElementById('catalog').classList.remove('hidden');
-            document.getElementById('cat-title').innerText = name;
-            // Тут в ідеалі робити запит до бота за товарами цієї категорії
-        }
-
-        function showCategories() {
-            document.getElementById('categories').classList.remove('hidden');
-            document.getElementById('catalog').classList.add('hidden');
-        }
-
-        function sendOrder(name, price) {
-            const delivery = document.getElementById('delivery_data').value;
+        document.getElementById('order_btn').addEventListener('click', function() {
+            const delivery = document.getElementById('delivery').value;
             const size = document.getElementById('size').value;
 
-            if(!delivery) { alert("Заповни дані доставки!"); return; }
+            if (delivery.length < 10) {
+                alert("Будь ласка, введіть повні дані для доставки!");
+                return;
+            }
 
             const data = {
-                product: name,
-                total: price,
+                product: "Худі Classic",
+                total: 1200,
                 size: size,
                 delivery: delivery
             };
-            tg.sendData(JSON.stringify(data));
-        }
+
+            // ВІДПРАВКА ДАНИХ
+            try {
+                tg.sendData(JSON.stringify(data));
+                tg.close(); // Закрити вікно після замовлення
+            } catch (e) {
+                alert("Помилка відправки: " + e.message);
+            }
+        });
     </script>
 </body>
 </html>
